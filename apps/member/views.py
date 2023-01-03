@@ -1,8 +1,43 @@
-from rest_framework import mixins, generics, permissions, status
-from rest_framework.response import Response
+import logging
 
+from django.db import transaction
+
+from rest_framework import viewsets, permissions, status
+from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
-from .serializers import MemberCreateSerializer, CustomTokenObtainSerializer
+
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
+
+from .serializers import MemberSerializer, JoinUserSerializer, CustomTokenObtainSerializer
+
+
+class CreateUser(viewsets.ViewSet):
+    """ 
+    회원 가입
+    
+    ---
+    """
+    permission_classes = [permissions.AllowAny]
+    user_response = openapi.Response("가입성공", JoinUserSerializer)
+
+    @swagger_auto_schema(
+        security=[],
+        responses={status.HTTP_201_CREATED: user_response},
+        request_body=JoinUserSerializer
+    )
+    @transaction.atomic
+    def create_user(self, request):
+        logging.info("create member user")
+        serializer = JoinUserSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        serializer.join(request.data)
+        serializer = MemberSerializer(serializer)
+
+        print(f'serializer.data: {serializer.data}')
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -14,27 +49,5 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
     permission_classes = (permissions.AllowAny,)
     serializer_class = CustomTokenObtainSerializer
-
-
-class CreateMember(generics.GenericAPIView, mixins.CreateModelMixin):
-    """ 
-    회원 생성
-    
-    ---
-    """
-    permission_classes = [permissions.AllowAny]
-    serializer_class = MemberCreateSerializer
-    
-    def post(self, request, *args, **kwargs):
-        print(request.data)
-        print(args)
-        print(kwargs)
-        return Response(data="", status=status.HTTP_201_CREATED)
-    
-    def create(self, request, *args, **kwargs):
-        print(request.data)
-        print(args)
-        print(kwargs)
-        return super().create(request, *args, **kwargs)
         
     

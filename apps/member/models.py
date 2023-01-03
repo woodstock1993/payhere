@@ -1,11 +1,15 @@
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+
+from apps.member import utils
 from .managers import CustomUserManager
 
 # Create your models here.
 class Member(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(_('email address'), unique=True)
+    name = models.CharField(max_length=128, blank=False)
+    password = models.CharField(max_length=20, validators=[utils.password_validator])
     
     # 관리자 페이지 접근 권한 여부
     is_staff = models.BooleanField(default=False)
