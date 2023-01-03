@@ -9,7 +9,8 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
-from .serializers import MemberSerializer, JoinUserSerializer, CustomTokenObtainSerializer
+from .serializers import MemberSerializer, CustomTokenObtainSerializer, ResponseMemberSerializer
+from .utils import MemberCreated
 
 
 class CreateUser(viewsets.ViewSet):
@@ -18,24 +19,27 @@ class CreateUser(viewsets.ViewSet):
     
     ---
     """
-    permission_classes = [permissions.AllowAny]
-    user_response = openapi.Response("가입성공", JoinUserSerializer)
+    permission_classes = (permissions.AllowAny,)
 
+    response_dict = {
+        status.HTTP_201_CREATED: None,
+        f"{status.HTTP_201_CREATED}(MEMBER CREATED)": ResponseMemberSerializer,
+        # f"{MemberCreated.status_code}({MemberCreated.default_code})":MemberCreated.response(),
+    }
     @swagger_auto_schema(
         security=[],
-        responses={status.HTTP_201_CREATED: user_response},
-        request_body=JoinUserSerializer
-    )
+        responses=response_dict,
+        request_body=MemberSerializer,
+        )
     @transaction.atomic
-    def create_user(self, request):
+    def join_user_view(self, request):
         logging.info("create member user")
-        serializer = JoinUserSerializer(data=request.data)
+        serializer = MemberSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        serializer.join(request.data)
-        serializer = MemberSerializer(serializer)
-
-        print(f'serializer.data: {serializer.data}')
+        instance = ResponseMemberSerializer()
+        member = instance.join(request.data)
+        serializer = ResponseMemberSerializer(member)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 

@@ -1,4 +1,5 @@
 import re, logging
+from collections import OrderedDict
 from rest_framework import serializers, exceptions
 from rest_framework_simplejwt.serializers import (
     PasswordField,
@@ -25,9 +26,9 @@ class CustomTokenObtainSerializer(TokenObtainPairSerializer):
             raise exceptions.NotFound(f'해당 {email}이 존재하지 않습니다')
 
 class MemberSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(max_length=20, validators=[utils.password_validator])
     email = serializers.EmailField()
-    name = serializers.CharField()
-    password = serializers.CharField(write_only=True, validators=[utils.password_validator])
+    password = PasswordField()
 
     def validate_name(self, value):
         if len(value) <= 0:
@@ -39,7 +40,7 @@ class MemberSerializer(serializers.ModelSerializer):
         elif re.search('[0-9]+', value) is None:
             raise exceptions.ValidationError('최소 1개 이상의 숫자 포함')
         elif re.search('[a-zA-Z]+', value) is None:
-            raise exceptions.ValidationError('최소 1개 이상의 숫자 포함')
+            raise exceptions.ValidationError('최소 1개 이상의 영어 소문자 또는 대문자 포함')
 
     def validate(self, attrs):
         email = attrs.get('email')        
@@ -47,20 +48,13 @@ class MemberSerializer(serializers.ModelSerializer):
         if queryset:
             raise exceptions.ValidationError("중복된 email입니다.")
         return super().validate(attrs)
-    
-    def create(self, validated_data):
-        print(f'validated_data:{validated_data}')
-        member = Member.objects.create(**validated_data)
-        return member
 
     class Meta:
         model = Member
-        fields = ['email', 'name', 'password']        
-        
+        fields= ['email', 'name', 'password']
 
-class JoinUserSerializer(serializers.Serializer):
-    user = MemberSerializer()
 
+class ResponseMemberSerializer(serializers.Serializer):
     def join(self, validated_data):
         logging.info('create user')
 
@@ -74,3 +68,23 @@ class JoinUserSerializer(serializers.Serializer):
         )
         member.set_password(password)
         member.save()
+        return member
+
+    def to_representation(self, instance):
+        data = {
+            'email': instance.email,
+            'name': instance.name
+        }
+        return data
+    class Meta:
+        model = Member
+        fields = ["email", "name"]
+        swagger_schema_fields = {
+            'description': "Member Created",
+            'example': OrderedDict(
+                [
+                    ("email", "gildong@naver.com"),
+                    ("name", "홍길동")
+                ]
+            )
+        }        
