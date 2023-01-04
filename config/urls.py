@@ -47,4 +47,3 @@ if settings.DEBUG:
             name='schema-redoc',
         )
     ]
-    

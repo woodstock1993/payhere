@@ -110,6 +110,8 @@ class ResponseMemberSerializer(serializers.Serializer):
             'name': instance.name
         }
         return data
+
+
     class Meta:
         model = Member
         fields = ["email", "name"]
