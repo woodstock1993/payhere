@@ -19,8 +19,8 @@ class PostGetUpdateDestory(generics.RetrieveUpdateDestroyAPIView):
 
     ---
     """
-    # permission_classes = [permissions.IsAuthenticated]
-    # authentication_classes = [JWTAuthentication]    
+    permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [JWTAuthentication]    
 
     def get_serializer_class(self):
         if self.request.method == 'GET':
@@ -79,8 +79,8 @@ class PostListCreate(generics.ListCreateAPIView):
 
     ---
     """
-    # permission_classes = [permissions.IsAuthenticated]
-    # authentication_classes = [JWTAuthentication]    
+    permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [JWTAuthentication]    
     serializer_class = CreatePostSerializer
 
     @transaction.atomic
@@ -111,8 +111,8 @@ class PostCopy(generics.GenericAPIView):
 
     ---
     """
-    # permission_classes = [permissions.IsAuthenticated]
-    # authentication_classes = [JWTAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
     serializer_class = CopyPostSerializer
     
     @swagger_auto_schema(

@@ -13,7 +13,6 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
 from .serializers import MemberSerializer, CustomTokenObtainSerializer, ResponseMemberSerializer
-from .utils import MemberCreated
 
 
 class CreateUser(viewsets.ViewSet):
@@ -26,8 +25,7 @@ class CreateUser(viewsets.ViewSet):
 
     response_dict = {
         status.HTTP_201_CREATED: None,
-        f"{status.HTTP_201_CREATED}(MEMBER CREATED)": ResponseMemberSerializer,
-        # f"{MemberCreated.status_code}({MemberCreated.default_code})":MemberCreated.response(),
+        f"{status.HTTP_201_CREATED}(MEMBER CREATED)": ResponseMemberSerializer,        
     }
     @swagger_auto_schema(
         security=[],
@@ -66,9 +64,6 @@ class LogOut(APIView):
     """ 
     permission_classes = [permissions.IsAuthenticated]
 
-    # @swagger_auto_schema(
-    #     responses = {status.HTTP_204_NO_CONTENT: ""}
-    # )
     def delete(self, request):
         response = Response(status=status.HTTP_204_NO_CONTENT)
         response.delete_cookie('access_token')
