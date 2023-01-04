@@ -48,6 +48,18 @@ INSTALLED_APPS = [
     'apps.post',
 ]
 
+SWAGGER_SETTINGS = {
+    "SECURITY_DEFINITIONS": {
+        "api_key": {
+            "type": "apiKey",
+            "in": "header",
+            "name": "Authorization",
+            "description": "JWT authorization",
+        }
+    },
+    "DEEP_LINKING": True,
+}
+
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (        
         "rest_framework_simplejwt.authentication.JWTAuthentication",
@@ -61,7 +73,7 @@ SIMPLE_JWT = {
     "UPDATE_LAST_LOGIN": False,
     "ALGORITHM": "HS256",
     "SIGNING_KEY": "SECRET_KEY",
-    "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_HEADER_TYPES": ("JWT",),
     "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
     "USER_ID_FIELD": "email",
 }

@@ -2,9 +2,12 @@ import logging
 
 from django.db import transaction
 
-from rest_framework import viewsets, permissions, status
+from rest_framework import viewsets, permissions, status, generics
+from rest_framework.views import APIView
+
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -53,5 +56,20 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
     permission_classes = (permissions.AllowAny,)
     serializer_class = CustomTokenObtainSerializer
-        
-    
+
+
+class LogOut(APIView):
+    """
+    로그아웃
+
+    ---
+    """ 
+    permission_classes = [permissions.IsAuthenticated]
+
+    # @swagger_auto_schema(
+    #     responses = {status.HTTP_204_NO_CONTENT: ""}
+    # )
+    def delete(self, request):
+        response = Response(status=status.HTTP_204_NO_CONTENT)
+        response.delete_cookie('access_token')
+        return response

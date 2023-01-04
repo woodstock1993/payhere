@@ -1,10 +1,13 @@
-import re, logging
+import re, logging, jwt
 from collections import OrderedDict
+
+from django.contrib.auth import authenticate
+
 from rest_framework import serializers, exceptions
+from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.serializers import (
     PasswordField,
-    TokenObtainPairSerializer, 
-    TokenObtainSerializer, 
+    TokenObtainPairSerializer,     
     TokenRefreshSerializer)
 
 from .models import Member
@@ -17,13 +20,43 @@ class CustomTokenObtainSerializer(TokenObtainPairSerializer):
         self.fields[self.username_field] = serializers.EmailField()
         self.fields['password'] = PasswordField()
     
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)        
+        token['name'] = user.name        
+        return token
+    
     def validate(self, attrs):
         logging.info("login validate")
-        email = attrs[self.username_field]        
+        email = attrs[self.username_field]
+        password = attrs['password']        
+        
         try:
             Member.objects.get(email=email)
         except Member.DoesNotExist:
             raise exceptions.NotFound(f'해당 {email}이 존재하지 않습니다')
+
+        user = authenticate(email=email, password=password)
+        if user is None:
+            raise exceptions.NotFound(f'패스워드가 일치하지 않습니다')
+
+        data = super(CustomTokenObtainSerializer, self).validate(attrs) 
+        return data
+
+
+class CustomTokenRefreshSerializer(TokenRefreshSerializer):
+    def validate(self, attrs):
+        logging.info('refresh token')
+        refresh = attrs['refresh']
+
+        sign_key = api_settings.SIGNING_KEY
+        algorithm = api_settings.ALGORITHM
+
+        decode = jwt.decode(refresh, sign_key, algorithms=[algorithm])
+        email = decode['email']
+
+        member = Member.objects.get(email=email)
+
 
 class MemberSerializer(serializers.ModelSerializer):
     password = serializers.CharField(max_length=20, validators=[utils.password_validator])
@@ -52,6 +85,7 @@ class MemberSerializer(serializers.ModelSerializer):
     class Meta:
         model = Member
         fields= ['email', 'name', 'password']
+
 
 
 class ResponseMemberSerializer(serializers.Serializer):
