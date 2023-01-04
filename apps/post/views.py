@@ -2,12 +2,13 @@ from django.db import transaction
 
 from rest_framework import permissions, status, exceptions
 from rest_framework.response import Response
-from rest_framework.viewsets import ViewSet, ModelViewSet, generics, mixins
+from rest_framework.views import APIView
+from rest_framework.viewsets import generics
 from rest_framework.authentication import TokenAuthentication
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from .models import Post
-from .serializers import PostSerializer, GenericPostSerializer, CreatePostSerializer, UpdatePostSerializer, DeletePostSerializer
+from .serializers import PostSerializer, GenericPostSerializer, CreatePostSerializer, UpdatePostSerializer, DeletePostSerializer, CopyPostSerializer
 
 from drf_yasg.utils import swagger_auto_schema
 
@@ -18,8 +19,8 @@ class PostGetUpdateDestory(generics.RetrieveUpdateDestroyAPIView):
 
     ---
     """
-    permission_classes = [permissions.IsAuthenticated]
-    authentication_classes = [JWTAuthentication]    
+    # permission_classes = [permissions.IsAuthenticated]
+    # authentication_classes = [JWTAuthentication]    
 
     def get_serializer_class(self):
         if self.request.method == 'GET':
@@ -30,7 +31,8 @@ class PostGetUpdateDestory(generics.RetrieveUpdateDestroyAPIView):
             return DeletePostSerializer
 
     @swagger_auto_schema(
-        operation_summary="가계부 조회",        
+        operation_summary="가계부 조회",
+        responses={status.HTTP_200_OK: PostSerializer}        
     )
     def retrieve(self, request, id):        
         try:
@@ -43,7 +45,8 @@ class PostGetUpdateDestory(generics.RetrieveUpdateDestroyAPIView):
         
     @swagger_auto_schema(
         operation_summary="가계부 업데이트",
-        request_body=UpdatePostSerializer
+        request_body=UpdatePostSerializer,
+        responses={status.HTTP_200_OK: UpdatePostSerializer}
     )
     def update(self, request, id, *args, **kwargs):
         serializer = self.get_serializer(data=self.request.data)
@@ -76,8 +79,8 @@ class PostListCreate(generics.ListCreateAPIView):
 
     ---
     """
-    permission_classes = [permissions.IsAuthenticated]
-    authentication_classes = [JWTAuthentication]    
+    # permission_classes = [permissions.IsAuthenticated]
+    # authentication_classes = [JWTAuthentication]    
     serializer_class = CreatePostSerializer
 
     @transaction.atomic
@@ -100,3 +103,37 @@ class PostListCreate(generics.ListCreateAPIView):
         queryset = Post.objects.all()
         serializer = PostSerializer(queryset, many=True)
         return Response(data=serializer.data, status=status.HTTP_200_OK)
+
+
+class PostCopy(generics.GenericAPIView):
+    """
+    가계부 특정 내역 복사
+
+    ---
+    """
+    # permission_classes = [permissions.IsAuthenticated]
+    # authentication_classes = [JWTAuthentication]
+    serializer_class = CopyPostSerializer
+    
+    @swagger_auto_schema(
+        operation_summary="가계부 복사",
+        responses={status.HTTP_201_CREATED: PostSerializer}
+    )
+    def get(self, *args, **kwargs):
+        try:
+            obj = Post.objects.get(id=kwargs.get('id'))
+        except Post.DoesNotExist:
+            raise exceptions.NotFound('가계부를 찾을 수 없습니다.') 
+
+        serializer = self.get_serializer(data=kwargs)
+        serializer.is_valid(raise_exception=True)
+        
+        post = Post.objects.create(
+            author = obj.author,
+            balance = obj.balance,
+            body = obj.body
+        )
+        serializer = PostSerializer(post)
+        return Response(data=serializer.data, status=status.HTTP_201_CREATED)
+
+

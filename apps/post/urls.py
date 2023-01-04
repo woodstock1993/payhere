@@ -13,4 +13,9 @@ urlpatterns = [
         views.PostListCreate.as_view(),
         name='post-create-destory'
     ),
+    path(
+        'post/<int:id>/copy',
+        views.PostCopy.as_view(),
+        name='post-copy'
+    ),
 ]

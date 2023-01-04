@@ -30,9 +30,9 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         email = attrs[self.username_field]
 
         try:
-            Member.objects.get()
-        except:
-            pass    
+            Member.objects.get(email=email)
+        except Member.DoesNotExist:
+            exceptions.NotFound('해당 이메일이 존재하지 않습니다')
 
 
 class PostSerializer(serializers.ModelSerializer):
@@ -104,3 +104,7 @@ class DeletePostSerializer(serializers.ModelSerializer):
         fields = ['id', 'body', 'balance']
 
 
+class CopyPostSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Post
+        fields = ['id']
