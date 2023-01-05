@@ -26,7 +26,7 @@
 - 2023.01.03 - 2023.01.05
 
 
-## 명세
+## 명세 (http://localhost/swagger)
 <img width="1444" alt="image" src="https://user-images.githubusercontent.com/67543838/210618278-54b01ef7-3304-4b27-9328-129fb84854fb.png">
 
 
@@ -55,7 +55,7 @@
 ### Step to run
 ```
 $ python -m venv venv
-$ source venv/vin/activate [MAC]
+$ source venv/bin/activate [MAC]
 $ python install -r requirements.txt
 $ python manage.py makemigrations
 $ python manage.py migrate
