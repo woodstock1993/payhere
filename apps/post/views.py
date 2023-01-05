@@ -1,3 +1,7 @@
+import random
+
+from datetime import timedelta
+from django.utils import timezone
 from django.db import transaction
 
 from rest_framework import permissions, status, exceptions
@@ -7,8 +11,8 @@ from rest_framework.viewsets import generics
 from rest_framework.authentication import TokenAuthentication
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
-from .models import Post
-from .serializers import PostSerializer, GenericPostSerializer, CreatePostSerializer, UpdatePostSerializer, DeletePostSerializer, CopyPostSerializer
+from .models import Post, ShortUrl
+from .serializers import PostSerializer, GenericPostSerializer, CreatePostSerializer, UpdatePostSerializer, DeletePostSerializer, CopyPostSerializer, PostShortUrlSerializer, PostRequestShortUrlSerializer
 
 from drf_yasg.utils import swagger_auto_schema
 
@@ -134,6 +138,65 @@ class PostCopy(generics.GenericAPIView):
             body = obj.body
         )
         serializer = PostSerializer(post)
+        return Response(data=serializer.data, status=status.HTTP_201_CREATED)
+
+
+
+class PostCreateShortUrl(APIView):
+    """
+    가계부 단축 url 생성
+    
+    ---
+    """
+    # permission_classes = [permissions.IsAuthenticated]
+    # authentication_classes = [JWTAuthentication]
+    
+    origin_url = 'http://localhost/api/post/'
+    landing_url = 'http://localhost/payhere.io'
+
+    @classmethod
+    def create_short_id(cls):
+        string = ""
+        for _ in range(5):
+            string += random.choice('abcdefghijklmnopqrstuvwxyz')
+        string += str(random.randint(0, 9))
+        return ''.join(random.sample(string, len(string)))
+
+    
+    @swagger_auto_schema(
+        operation_summary="단축 url 생성",
+        request_body= PostRequestShortUrlSerializer,      
+        responses={status.HTTP_201_CREATED: PostShortUrlSerializer}
+    )
+    @transaction.atomic
+    def post(self, *args, **kwargs):
+        landing_url = self.landing_url
+        origin_url = self.origin_url
+
+        while True:
+            short_id = PostCreateShortUrl.create_short_id()
+            try:
+                ShortUrl.objects.get(short_id=short_id)
+            except ShortUrl.DoesNotExist:
+                pass
+            break
+
+        obj = ShortUrl(
+            short_id=short_id,
+            origin_url=f'{origin_url}/{id}',
+            shorten_url= f'{landing_url}/{short_id}',
+            expired = timezone.now() + timedelta(hours=24)
+        )
+        data = {
+            'short_id': obj.short_id,
+            'origin_url': obj.origin_url,
+            'shorten_url' : obj.shorten_url,
+            'expired' : obj.expired
+        }
+        serializer = PostShortUrlSerializer(obj, data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        
         return Response(data=serializer.data, status=status.HTTP_201_CREATED)
 
 

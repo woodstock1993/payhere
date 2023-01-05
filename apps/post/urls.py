@@ -18,4 +18,9 @@ urlpatterns = [
         views.PostCopy.as_view(),
         name='post-copy'
     ),
+    path(
+        'post/short-id',
+        views.PostCreateShortUrl.as_view(),
+        name='post-create-short-id'
+    )
 ]

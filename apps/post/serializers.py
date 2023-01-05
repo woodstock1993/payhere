@@ -1,11 +1,9 @@
 import logging
 
-from rest_framework import status, exceptions
-from rest_framework.response import Response
+from rest_framework import exceptions
 from rest_framework import serializers
 
-from .utils import password_validator
-from .models import Post
+from .models import Post, ShortUrl
 
 from rest_framework_simplejwt.serializers import (
     PasswordField,
@@ -108,3 +106,14 @@ class CopyPostSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = ['id']
+
+
+class PostRequestShortUrlSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ShortUrl
+        fields = ['origin_url']
+
+class PostShortUrlSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ShortUrl
+        fields = '__all__'
